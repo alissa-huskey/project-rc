@@ -1,4 +1,5 @@
 Project-Env
+===
 > per-project shell env files
 
 Setup
@@ -6,19 +7,19 @@ Setup
 
 In the appropriate shellrc file, source `project-rc.sh` and then call `project:env:load`.
 
-`sh
+```sh
 # $HOME/.profile
 
 source "project-rc.sh"
 project:env:load
-`
+```
 
 Usage
 ---
 
 In the project root directory, add a `.env` file. In it, define a `on_enter` to be run when you CD into the project or one of its subdirectories, and `on_exit` function to be run on the reverse.
 
-`sh
+```sh
 # $PROJECT_ROOT/.env
 
 on_enter() {
@@ -28,7 +29,7 @@ on_enter() {
 on_exit() {
   project:revert PATH
 }
-`
+```
 Behavior
 ---
 
