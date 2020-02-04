@@ -2,6 +2,7 @@
 # shellcheck disable=SC2039
 #
 # project-rc.sh -- per-project envfiles
+# https://github.com/alissa-huskey/project-rc
 #
 
 RC_FILENAMES=( .projectrc .project-env .project .env )
