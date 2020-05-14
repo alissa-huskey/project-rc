@@ -41,7 +41,6 @@ Features
 ---
 
 * `$PROJECT_ROOT` environment variable
-* `$PROJECT_ENVFILE` environment variable
 * `project:export <varname> <value>` - exports `<varname>` to `<value>` and saves previous value.
 * `project:revert <varname>` - set `<varname>` to previously set value.
 

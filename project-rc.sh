@@ -12,22 +12,21 @@ RC_FILENAMES=( .projectrc .project-env .project .env )
 #   is found, then print it
 #   if not found, return 1
 project:find_up() {
-  (
-    while true; do
-      if [[ $PWD == / ]] || [[ $PWD == // ]]; then
-        return 1
+  local pwd="${PWD}"
+  while true; do
+    if [[ -z "$pwd" ]] || [[ $pwd == / ]] || [[ $pwd == // ]]; then
+      return 1
+    fi
+
+    for f in "${@}"; do
+      if [[ -f $pwd/$f ]]; then
+        echo "$pwd/$f"
+        return 0
       fi
-
-      for f in "${@}"; do
-        if [[ -f $PWD/$f ]]; then
-          echo "$PWD/$f"
-          return 0
-        fi
-      done
-
-      cd ..
     done
-  )
+
+    pwd="${pwd%/*}"
+  done
 }
 
 # usage: project:myshell
@@ -57,9 +56,9 @@ project:valof() {
 #   save the current value of <varname> to OLD_<varname>
 #   set <varname> to <value> then export it
 project:export() {
-  local varname="${1}" old_varname="OLD_${1}" oldval newval="${2}"
+  local varname="${1}" old_varname="OLD_${1}" newval="${2}" oldval 
 
-  oldval="$(project:valof ${varname})"
+  oldval=$(eval "echo \"\$$varname\"")
 
   export ${old_varname}="${oldval}"
   export ${varname}="${newval}"
@@ -96,7 +95,7 @@ project:auth() {
 # project:env:source <envfile>
 #   run on_exit, source <envfile>, and run on_enter
 project:env:source() {
-  local envfile="${1}" PROJECT_ROOT="${1%/*}" confirm authfile
+  local envfile="${1}" project_root="${1%/*}" confirm authfile
   authfile="${HOME}/.projectrc-auth"
 
   # run the defined on_exit function from previously loaded envfile
@@ -128,14 +127,13 @@ project:env:source() {
 
   # auth and source envfile then run on_enter
   if [[ "$confirm" == "y" ]] || [[ "$confirm" == "Y" ]]; then
-    export PROJECT_ENVFILE="${envfile}"
-    export PROJECT_ROOT="${envfile%/*}"
+    export PROJECT_ROOT="${project_root}"
 
     project:auth "${envfile}"
     source "${envfile}"
 
     if declare -f on_enter > /dev/null; then
-      on_enter "${envfile%/*}"
+      on_enter
     fi
 
   # or refuse to authrozie
