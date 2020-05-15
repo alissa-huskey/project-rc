@@ -29,36 +29,14 @@ project:find_up() {
   done
 }
 
-# usage: project:myshell
-#   print the current shell
-project:myshell() {
-  ps -ocomm= -p $$
-}
-
-# usage: project:valof <varname>
-#   print the value of <varname>
-project:valof() {
-  local v shell
-
-  shell="$(project:myshell)"
-
-  if [[ "$shell" =~ bash ]]; then
-    v="${!1}"
-
-  elif [[ "$shell" =~ zsh ]]; then
-    v="${(P)1}"
-  fi
-
-  printf "%s" "$v"
-}
 
 # usage: project:export <varname> <value>
 #   save the current value of <varname> to OLD_<varname>
 #   set <varname> to <value> then export it
 project:export() {
-  local varname="${1}" old_varname="OLD_${1}" newval="${2}" oldval 
+  local varname="${1}" old_varname="OLD_${1}" newval="${2}" oldval
 
-  oldval=$(eval "echo \"\$$varname\"")
+  oldval=$(eval "echo \"\$${varname}\"")
 
   export ${old_varname}="${oldval}"
   export ${varname}="${newval}"
@@ -67,9 +45,11 @@ project:export() {
 # usage: project:revert <varname>
 #   set <varname> to the value of OLD_<varname> then export it
 project:revert() {
-  local varname="${1}" old_varname="OLD_${1}"
+  local varname="${1}" old_varname="OLD_${1}" oldval
 
-  export ${varname}="$(project:valof "${old_varname}")"
+  oldval=$(eval "echo \"\$${old_varname}\"")
+
+  export ${varname}="${oldval}"
   unset "${old_varname}"
 }
 

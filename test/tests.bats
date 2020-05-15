@@ -19,6 +19,25 @@ setup() {
   assert_equal "${OLD_PROJECT_NAME}" ""
 }
 
+@test "project:env:source <envfile> -- successively, failing" {
+  skip "broken test"
+
+  export PROJECT_NAME="xxx"
+  project:env:source "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
+
+  assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/recipes"
+  assert_equal "${PROJECT_NAME}" "recipes"
+  assert_equal "${OLD_PROJECT_NAME}" "xxx"
+
+  project:env:source "${PROJECTS_DIR}/vim/vimpack/.env" <<< "y"
+
+  assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/vimpack"
+  assert_equal "${PROJECT_NAME}" "vimpack"
+
+  # this is broken-- don't know why
+  assert_equal "${OLD_PROJECT_NAME}" "recipes"
+}
+
 @test "project:env:source <envfile> -- successively" {
   export PROJECT_NAME="xxx"
   project:env:source "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
@@ -42,18 +61,6 @@ setup() {
 
 @test "project:is_authed <envfile>" {
   skip
-}
-
-@test "project:valof <varname> -- with value set" {
-  run project:valof HOME
-  assert_success
-  assert_output "${HOME}"
-}
-
-@test "project:valof <varname> -- no value set" {
-  run project:valof THING
-  assert_success
-  assert_output ""
 }
 
 @test "project:export <varname> <value> -- no previous value set" {
@@ -86,13 +93,6 @@ setup() {
 
   assert_equal "${THING}" ""
   assert_equal "${OLD_THING}" ""
-}
-
-@test "project:myshell" {
-  run project:myshell
-
-  assert_success
-  assert_output "bash"
 }
 
 @test "project:find_up <filename> -- where PWD is subdir of PROJECT_ROOT" {
