@@ -6,61 +6,87 @@ p() {
   echo "# ${@}" >&3
 }
 
-setup() {
-  source ${BATS_TEST_DIRNAME}/../project-rc.sh
-  export PROJECTS_DIR="${BATS_TEST_DIRNAME}/fixtures/projects"
+mk_authfile() {
+  {
+    echo "${PROJECTS_DIR}/vim/recipes/.env"
+    echo "${PROJECTS_DIR}/vim/vimpack/.env"
+  } | gpg --quiet --yes --default-recipient-self --armor --encrypt --output "${authfile}"
 }
 
-@test "project:env:source <envfile>" {
-  project:env:source "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
+setup() {
+  source ${BATS_TEST_DIRNAME}/../project-rc.sh
+  export PROJECTS_DIR="${BATS_TEST_DIRNAME}/fixtures/projects" DEBUG=
+  export authfile="${BATS_TEST_DIRNAME}/fixtures/authfile"
+  mk_authfile
+}
+
+@test "project:env:load <envfile>" {
+  project:env:load "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
 
   assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/recipes"
   assert_equal "${PROJECT_NAME}" "recipes"
   assert_equal "${OLD_PROJECT_NAME}" ""
 }
 
-@test "project:env:source <envfile> -- successively, failing" {
-  skip "broken test"
-
+@test "project:env:load <envfile> -- successively" {
   export PROJECT_NAME="xxx"
-  project:env:source "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
+
+  project:env:load "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
 
   assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/recipes"
   assert_equal "${PROJECT_NAME}" "recipes"
   assert_equal "${OLD_PROJECT_NAME}" "xxx"
 
-  project:env:source "${PROJECTS_DIR}/vim/vimpack/.env" <<< "y"
+  project:env:load "${PROJECTS_DIR}/vim/vimpack/.env" <<< "y"
 
   assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/vimpack"
   assert_equal "${PROJECT_NAME}" "vimpack"
 
-  # this is broken-- don't know why
-  assert_equal "${OLD_PROJECT_NAME}" "recipes"
-}
-
-@test "project:env:source <envfile> -- successively" {
-  export PROJECT_NAME="xxx"
-  project:env:source "${PROJECTS_DIR}/vim/recipes/.env" <<< "y"
-
-  assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/recipes"
-  assert_equal "${PROJECT_NAME}" "recipes"
+  # this is "xxx" instead of "recipes" because we first revert, then export
   assert_equal "${OLD_PROJECT_NAME}" "xxx"
-
-  project:env:source "${PROJECTS_DIR}/vim/vimpack/.env" <<< "y"
-
-  assert_equal "${PROJECT_ROOT}" "${PROJECTS_DIR}/vim/vimpack"
-  assert_equal "${PROJECT_NAME}" "vimpack"
-
-  # this is broken-- don't know why
-  # assert_equal "${OLD_PROJECT_NAME}" "recipes"
 }
 
-@test "project:auth <envfile>" {
-  skip
+@test "project:auth <envfile> -- when not authed" {
+  project:auth "${PROJECTS_DIR}/.tmp"
+
+  run project:is_authed "${PROJECTS_DIR}/.tmp"
+  assert_success
+
+  project:deauth "${PROJECTS_DIR}/.tmp"
 }
 
-@test "project:is_authed <envfile>" {
-  skip
+@test "project:auth <envfile> -- when authed" {
+  project:auth "${PROJECTS_DIR}/vim/vimpack/.env"
+
+  run project:is_authed "${PROJECTS_DIR}/vim/vimpack/.env"
+  assert_success
+}
+
+@test "project:deauth <envfile> -- when not authed" {
+  project:deauth "${PROJECTS_DIR}/.tmp"
+
+  run project:is_authed "${PROJECTS_DIR}/.tmp"
+  assert_failure
+}
+
+@test "project:deauth <envfile> -- when authed" {
+  project:auth "${PROJECTS_DIR}/.tmp"
+  project:deauth "${PROJECTS_DIR}/.tmp"
+
+  run project:is_authed "${PROJECTS_DIR}/.tmp"
+  assert_failure
+}
+
+@test "project:is_authed <envfile> -- when not authed" {
+  run project:is_authed "${PROJECTS_DIR}/.nofile"
+
+  assert_failure
+}
+
+@test "project:is_authed <envfile> -- when authed" {
+  run project:is_authed "${PROJECTS_DIR}/vim/recipes/.env"
+
+  assert_success
 }
 
 @test "project:export <varname> <value> -- no previous value set" {
@@ -85,7 +111,7 @@ setup() {
   project:revert THING
 
   assert_equal "${THING}" "nothing"
-  assert_equal "${OLD_THING}" ""
+  assert_equal "${OLD_THING}" "something"
 }
 
 @test "project:revert <varname> -- no previous value set" {
