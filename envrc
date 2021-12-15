@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# example envrc file
+# valid names: .projectrc .project-env .project .env .envrc
+# environment varialbes:
+#    PROJECT_ROOT        path to the root dir of your project (where this file is located)
+#    PROJECT_ENVFILE     path and filename of this file
+
+on_enter() {
+  project:export SOMEVAR "someval"
+}
+
+on_exit() {
+  project:revert SOMEVAR
+}

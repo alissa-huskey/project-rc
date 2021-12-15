@@ -1,0 +1,3 @@
+2021-12-15 In project:_setup check for missing gpg key with encryption capabilities
+2021-12-15 @bug Fix project:env:revert
+x 2021-12-15 2021-12-15 @bug Failing silently when missing gpg key
